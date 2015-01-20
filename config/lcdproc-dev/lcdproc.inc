@@ -32,8 +32,8 @@
 	require_once("service-utils.inc");
 	/* LCDproc */
 	define('LCDPROC_RCFILE', '/usr/local/etc/rc.d/lcdproc.sh');
-	define('LCDPROC_CONFIG','/usr/local/etc/LCDd.conf');
-	define('LCDPROC_HOST','localhost');
+	define('LCDPROC_CONFIG','/usr/pbi/lcdproc-amd64/local/etc/LCDd.conf');
+	define('LCDPROC_HOST','127.0.0.1');
 	define('LCDPROC_PORT','13666');
 	define('LCDPROC_SERVICE_NAME','lcdproc');
 	/* Functions */	
@@ -58,17 +58,17 @@
 		fclose($handle);
 		chmod($file, 0755);
 	}
-	function before_form_lcdproc($pkg) {
+	function before_form_lcdproc(&$pkg) {
 		global $config;
 		config_lock();
 		config_unlock();
 	}
-	function before_form_lcdproc_screens($pkg) {
+	function before_form_lcdproc_screens(&$pkg) {
 		global $config;
 		config_lock();
 		config_unlock();
 	}
-	function validate_form_lcdproc($post, $input_errors) {
+	function validate_form_lcdproc($post, &$input_errors) {
 		if($post['comport']) {
 			switch($post['comport']) {
 				case "none":
@@ -126,7 +126,7 @@
 			}
 		}		
 	}
-	function validate_form_lcdproc_screens($post, $input_errors) {
+	function validate_form_lcdproc_screens($post, &$input_errors) {
 		// No validation required ?!
 	}
 	function sync_package_lcdproc_screens() {
@@ -190,7 +190,7 @@
 					return;
 			}
 			$config_text = "[server]\n";
-			$config_text .= "DriverPath=/usr/local/lib/lcdproc/\n";			
+			$config_text .= "DriverPath=/usr/pbi/lcdproc-amd64/local/lib/lcdproc/\n";#	DriverPath=/usr/pbi/lcdproc-amd64/local/lib/lcdproc		
 			$config_text .= "Driver={$lcdproc_config[driver]}\n";
 			$config_text .= "Bind=127.0.0.1\n";
 			$config_text .= "Port=13666\n";
@@ -306,9 +306,10 @@
 					break;
 				case "hd44780":
 					$config_text .= "[{$lcdproc_config['driver']}]\n";
-					$config_text .= "driverpath=/usr/local/lib/lcdproc/\n";
+					$config_text .= "driverpath=/usr/pbi/lcdproc-amd64/local/lib/lcdproc/\n";
 					$config_text .= "ConnectionType={$lcdproc_config['connection_type']}\n";
-					$config_text .= "Device={$realport}\n";
+					if($lcdproc_config['comport'] != "none")
+						$config_text .= "Device={$realport}\n";
 					$config_text .= "Port=0x378\n"; 
 					$config_text .= "Speed=0\n";
 					$config_text .= "Keypad=yes\n";
@@ -386,7 +387,7 @@
 					break;
 				case "nexcom":
 					$config_text .= "[{$lcdproc_config['driver']}]\n";
-					$config_text .= "driverpath =/usr/local/lib/lcdproc/\n";
+					$config_text .= "driverpath =/usr/pbi/lcdproc-amd64/local/lib/lcdproc/\n";
 					$config_text .= "Device={$realport}\n";
 					$config_text .= "Size={$lcdproc_config['size']}\n";
 					break;
@@ -401,7 +402,7 @@
 					break;
 				case "picolcd":
 					$config_text .= "[{$lcdproc_config['driver']}]\n";
-					$config_text .= "driverpath=/usr/local/lib/lcdproc/\n";
+					$config_text .= "driverpath=/usr/pbi/lcdproc-amd64/local/lib/lcdproc/\n";
 					$config_text .= "Device={$realport}\n";
 					$config_text .= "Size={$lcdproc_config['size']}\n";
 					$config_text .= "KeyTimeout=500\n";
@@ -452,7 +453,7 @@
 					break;
 				case "SureElec":
 					$config_text .= "[{$lcdproc_config['driver']}]\n";
-					$config_text .= "driverpath =/usr/local/lib/lcdproc/\n";
+					$config_text .= "driverpath =/usr/pbi/lcdproc-amd64/local/lib/lcdproc/\n";
 					$config_text .= "Device={$realport}\n";
 					$config_text .= "Size={$lcdproc_config['size']}\n";
 					$config_text .= "Edition=2\n";					
@@ -502,7 +503,7 @@ EOD;
 				restart_service(LCDPROC_SERVICE_NAME);
 			}			
 		}
-		if((! $lcdproc_config['driver']) || ($lcdproc_config['comport'] == "none")) {
+		if((! $lcdproc_config['driver']) || (! $lcdproc_config['comport'])) {
 			/* no parameters user does not want lcdproc running */
 			/* lets stop the service and remove the rc file */
 			if(file_exists(LCDPROC_RCFILE)) {
